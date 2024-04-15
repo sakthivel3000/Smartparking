@@ -27,11 +27,11 @@ model = YOLO('yolov8n.pt')
 # import os
 # os.environ['KMP_DUPLICATE_LIB_OK']='True'
 # model.eval()
-def get_cars(boxes, class_ids, box):
+def get_cars(boxes, class_ids):
     cars = []
-    for i, box in enumerate(boxes):
+    for i in range(boxes.shape[0]):
         if class_ids[i] in [3, 8, 6]:
-            cars.append(box)
+            cars.append(boxes[i])
     return np.array(cars)
 def compute_overlaps(parked_car_boxes, car_boxes):
     new_car_boxes = []
@@ -89,10 +89,11 @@ if __name__ == "__main__":
             break
 
         # Convert the frame to a tensor
-        frame_tensor = torch.from_numpy(frame.transpose((2, 0, 1)))
+        frame_tensor = torch.from_numpy(frame.transpose((2, 0, 1))).float()
         # Run the model on the frame
         results = model(frame_tensor.unsqueeze(0))
         # Get the car detections
+        print(results[0]['boxes'].shape)
         cars = get_cars(results[0]['boxes'].detach().numpy(), results[0]['classes'].detach().numpy())
         overlaps = compute_overlaps(parked_car_boxes, cars.tolist())
 
