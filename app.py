@@ -109,7 +109,7 @@ class SayHello(App):
         self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
 
         # image widget
-        self.window.add_widget(Image(source="bmw2.jpg"))
+        self.window.add_widget(Image(source="carimage\\bmw2.jpg"))
 
         # label widget
         self.greeting = Label(

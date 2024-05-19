@@ -15,7 +15,7 @@ i = int(input("enter the carparking capacity : "))
 cv2.namedWindow('RGB')
 cv2.setMouseCallback('RGB', RGB)
 
-cap = cv2.VideoCapture('carv.mp4')
+cap = cv2.VideoCapture('S:\college\python\detect\carvideo\carv.mp4')
 
 my_file = open("coco.txt", "r")
 data = my_file.read()
@@ -29,12 +29,19 @@ while True:
     count += 1
     if count % 3 != 0:
         continue
+    if frame is None:
+        print("Error: Unable to load image")
+        continue
+    else:
+        # Resize the image
+        resized_frame = cv2.resize(frame, (1020, 500))
 
-    frame = cv2.resize(frame, (1020, 500))
+    # frame = cv2.resize(frame, (1020, 500))
 
     results = model.predict(frame)
     #   print(results)
     a = results[0].boxes.data
+    print(a)
     px = pd.DataFrame(a).astype("float")
     #    print(px)
     for index, row in px.iterrows():

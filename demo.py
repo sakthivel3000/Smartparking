@@ -13,6 +13,8 @@
 # # for r in results:
 # #     print(r.boxes)  # print the Boxes object containing the detection bounding boxes
 import torch
+from torch import classes
+
 from ultralytics import YOLO
 from shapely.geometry import Polygon as shapely_poly
 from shapely.geometry import box
@@ -27,6 +29,9 @@ model = YOLO('yolov8n.pt')
 # import os
 # os.environ['KMP_DUPLICATE_LIB_OK']='True'
 # model.eval()
+my_file = open("coco.txt", "r")
+data = my_file.read()
+class_list = data.split("\n")
 def get_cars(boxes, class_ids):
     cars = []
     for i in range(boxes.shape[0]):
@@ -49,7 +54,7 @@ def compute_overlaps(parked_car_boxes, car_boxes):
 
     overlaps = np.zeros((len(parked_car_boxes), len(new_car_boxes)))
     for i in range(len(parked_car_boxes)):
-        for j in range(car_boxes.shape[0]):
+        for j in range(len(car_boxes)):
             pol1_xy = parked_car_boxes[i]
             pol2_xy = new_car_boxes[j]
             polygon1_shape = shapely_poly(pol1_xy)
@@ -89,13 +94,18 @@ if __name__ == "__main__":
             break
 
         # Convert the frame to a tensor
-        frame_tensor = torch.from_numpy(frame.transpose((2, 0, 1))).float()
+        # frame_tensor = torch.from_numpy(frame.transpose((2, 0, 1))).float()
         # Run the model on the frame
-        results = model(frame_tensor.unsqueeze(0))
+        # results = model(frame_tensor.unsqueeze(0))
         # Get the car detections
-        print(results[0]['boxes'].shape)
-        cars = get_cars(results[0]['boxes'].detach().numpy(), results[0]['classes'].detach().numpy())
-        overlaps = compute_overlaps(parked_car_boxes, cars.tolist())
+        # print(results[0]['boxes'].shape)
+        # cars = get_cars(results[0]['boxes'], class_list)
+
+        results = model.track(frame, classes=2)
+        # if results[0].boxes.id is not None:
+
+        cars = results[0].boxes.xyxy.int().cpu().tolist()
+        overlaps = compute_overlaps(parked_car_boxes, cars)
 
         for parking_area, overlap_areas in zip(parked_car_boxes, results):
             max_IoU_overlap = np.max(overlap_areas)
