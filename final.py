@@ -117,10 +117,9 @@ def run(
             region_label = str(region["counts"])
             region_color = region["region_color"]
             region_text_color = region["text_color"]
-
+            region_name = str(region["name"])
             polygon_coords = np.array(region["polygon"].exterior.coords, dtype=np.int32)
             centroid_x, centroid_y = int(region["polygon"].centroid.x), int(region["polygon"].centroid.y)
-
             text_size, _ = cv2.getTextSize(
                 region_label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.7, thickness=line_thickness
             )
@@ -137,7 +136,7 @@ def run(
                 frame, region_label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, region_text_color, line_thickness
             )
             cv2.polylines(frame, [polygon_coords], isClosed=True, color=region_color, thickness=region_thickness)
-
+            if
         if view_img:
             if vid_frame_count == 1:
                 cv2.namedWindow("Parking Pixel")
