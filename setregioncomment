@@ -1,0 +1,522 @@
+# import os
+# import numpy as np
+# import cv2
+# import pickle
+# import argparse
+# import matplotlib.pyplot as plt
+# from matplotlib.patches import Polygon
+# from matplotlib.widgets import PolygonSelector
+# from matplotlib.collections import PatchCollection
+# from shapely.geometry import box
+# from shapely.geometry import Polygon as shapely_poly
+#
+# points = []
+# prev_points = []
+# patches = []
+# total_points = []
+# breaker = False
+#
+#
+# class SelectFromCollection(object):
+#     def __init__(self, ax):
+#         self.canvas = ax.figure.canvas
+#
+#         self.poly = PolygonSelector(ax, self.onselect)
+#         self.ind = []
+#
+#     def onselect(self, verts):
+#         global points
+#         points = verts
+#         self.canvas.draw_idle()
+#
+#     def disconnect(self):
+#         self.poly.disconnect_events()
+#         self.canvas.draw_idle()
+#
+#
+# def break_loop(event):
+#     global breaker
+#     global globSelect
+#     global savePath
+#     if event.key == 'b':
+#         globSelect.disconnect()
+#         if os.path.exists(savePath):
+#             os.remove(savePath)
+#
+#         print("data saved in " + savePath + " file")
+#         with open(savePath, 'wb') as f:
+#             pickle.dump(total_points, f, protocol=pickle.HIGHEST_PROTOCOL)
+#             exit()
+#
+#
+# def onkeypress(event):
+#     global points, prev_points, total_points
+#     if event.key == 'n':
+#         pts = np.array(points, dtype=np.int32)
+#         if points != prev_points and len(set(points)) == 4:
+#             print("Points : " + str(pts))
+#             patches.append(Polygon(pts))
+#             total_points.append(pts)
+#             prev_points = points
+#
+#
+# if __name__ == '__main__':
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('video_path', help="Path of video file")
+#     parser.add_argument('--out_file', help="Name of the output file")#, default="regions.p"
+#     args = parser.parse_args()
+#
+#     global globSelect
+#     global savePath
+#     savePath = args.out_file if args.out_file.endswith(".p") else args.out_file + ".p"
+#
+#     video_capture = cv2.VideoCapture(args.video_path)
+#     cnt = 0
+#     rgb_image = None
+#     while video_capture.isOpened():
+#         success, frame = video_capture.read()
+#         if not success:
+#             break
+#         if cnt == 5:
+#             rgb_image = frame[:, :, ::-1]
+#         cnt += 1
+#     video_capture.release()
+#
+#     while True:
+#         fig, ax = plt.subplots()
+#         image = rgb_image
+#         ax.imshow(image)
+#
+#         p = PatchCollection(patches, alpha=0.7)
+#         p.set_array(10 * np.ones(len(patches)))
+#         ax.add_collection(p)
+#
+#         globSelect = SelectFromCollection(ax)
+#         bbox = plt.connect('key_press_event', onkeypress)
+#         break_event = plt.connect('key_press_event', break_loop)
+#         # Define the paragraph using triple quotes
+#         paragraph = """Select a region in the figure by enclosing them within a quadrilateral:
+#         Press the 'f' key to go full screen.
+#         Press the 'esc' key to discard current quadrilateral.
+#         Try holding the 'shift' key to move all of the vertices.
+#         Try holding the 'ctrl' key to move a single vertex.
+#         After marking a quadrilateral press 'n' to save current quadrilateral and then press 'q' to start marking a new quadrilateral.
+#         When you are done press 'b' to Exit the program.
+#         """
+#
+#         # Print the paragraph
+#         print(paragraph)
+#
+#         plt.figtext(0.1, 0, paragraph, wrap=True, horizontalalignment='left', fontsize=12)
+#         fig.subplots_adjust(bottom=0.3)
+#         plt.show()
+#         globSelect.disconnect()
+
+# import os
+# import numpy as np
+# import cv2
+# import pickle
+# import argparse
+# import matplotlib.pyplot as plt
+# from matplotlib.patches import Polygon
+# from matplotlib.widgets import PolygonSelector
+# from matplotlib.collections import PatchCollection
+#
+#
+# class RegionSelector:
+#     def __init__(self, video_path, save_path):
+#         self.video_path = video_path
+#         self.save_path = save_path if save_path.endswith(".p") else save_path + ".p"
+#         self.points = []
+#         self.prev_points = []
+#         self.patches = []
+#         self.total_points = self.load_existing_points()
+#         self.rgb_image = None
+#         self.globSelect = None
+#         self.load_video_frame()
+#
+#     def load_video_frame(self):
+#         video_capture = cv2.VideoCapture(self.video_path)
+#         cnt = 0
+#         while video_capture.isOpened():
+#             success, frame = video_capture.read()
+#             if not success:
+#                 break
+#             if cnt == 5:
+#                 self.rgb_image = frame[:, :, ::-1]
+#             cnt += 1
+#         video_capture.release()
+#
+#     def load_existing_points(self):
+#         if os.path.exists(self.save_path):
+#             with open(self.save_path, 'rb') as f:
+#                 points = pickle.load(f)
+#             return points
+#         return []
+#
+#     def onselect(self, verts):
+#         self.points = verts
+#         plt.gca().figure.canvas.draw_idle()
+#
+#     def break_loop(self, event):
+#         if event.key == 'b':
+#             self.globSelect.disconnect()
+#             if os.path.exists(self.save_path):
+#                 os.remove(self.save_path)
+#
+#             print(f"Data saved in {self.save_path} file")
+#             with open(self.save_path, 'wb') as f:
+#                 pickle.dump(self.total_points, f, protocol=pickle.HIGHEST_PROTOCOL)
+#             exit()
+#
+#     def onkeypress(self, event):
+#         if event.key == 'n':
+#             pts = np.array(self.points, dtype=np.int32)
+#             if self.points != self.prev_points and len(set(map(tuple, self.points))) == 4:
+#                 print(f"Points: {pts}")
+#                 self.patches.append(Polygon(pts))
+#                 self.total_points.append(pts)
+#                 self.prev_points = self.points
+#
+#     def run(self):
+#         fig, ax = plt.subplots()
+#         ax.imshow(self.rgb_image)
+#
+#         # Reverse the y-axis
+#         # ax.invert_yaxis()
+#
+#         # Add existing points to the plot
+#         for pts in self.total_points:
+#             self.patches.append(Polygon(pts))
+#
+#         p = PatchCollection(self.patches, alpha=0.7)
+#         p.set_array(10 * np.ones(len(self.patches)))
+#         ax.add_collection(p)
+#
+#         self.globSelect = SelectFromCollection(ax, self.onselect)
+#         bbox = plt.connect('key_press_event', self.onkeypress)
+#         break_event=plt.connect('key_press_event', self.break_loop)
+#
+#         # Define the instructions paragraph
+#         paragraph = (
+#             "Select a region in the figure by enclosing them within a quadrilateral.\n"
+#             "Press the 'f' key to go full screen.\n"
+#             "Press the 'esc' key to discard current quadrilateral.\n"
+#             "Try holding the 'shift' key to move all of the vertices.\n"
+#             "Try holding the 'ctrl' key to move a single vertex.\n"
+#             "After marking a quadrilateral press 'n' to save current quadrilateral and then press 'q' to start marking a new quadrilateral.\n"
+#             "When you are done press 'b' to Exit the program.\n"
+#         )
+#
+#
+#         plt.figtext(0.1, 0, paragraph, wrap=True, horizontalalignment='left', fontsize=12)
+#         fig.subplots_adjust(bottom=0.3)
+#         plt.show()
+#         self.globSelect.disconnect()
+#
+#
+# class SelectFromCollection:
+#     def __init__(self, ax, onselect):
+#         self.poly = PolygonSelector(ax, onselect)
+#
+#     def disconnect(self):
+#         self.poly.disconnect_events()
+#         plt.gca().figure.canvas.draw_idle()
+#
+#
+# if __name__ == '__main__':
+# #     parser = argparse.ArgumentParser()
+# #     parser.add_argument('video_path', help="Path of video file")
+# #     parser.add_argument('--out_file', help="Name of the output file", required=True)
+# #     args = parser.parse_args()
+# #
+# #     region_selector = RegionSelector(args.video_path, args.out_file)
+# #     region_selector.run()
+#
+# import os
+# import numpy as np
+# import cv2
+# import pickle
+# import argparse
+# import matplotlib.pyplot as plt
+# from matplotlib.patches import Polygon
+# from matplotlib.widgets import PolygonSelector
+# from matplotlib.collections import PatchCollection
+# from shapely.geometry import box
+# from shapely.geometry import Polygon as shapely_poly
+#
+# points = []
+# prev_points = []
+# patches = []
+# total_points = []
+# breaker = False
+#
+# class SelectFromCollection(object):
+#     def __init__(self, ax):
+#         self.canvas = ax.figure.canvas
+#
+#         self.poly = PolygonSelector(ax, self.onselect)
+#         self.ind = []
+#
+#     def onselect(self, verts):
+#         global points
+#         points = verts
+#         self.canvas.draw_idle()
+#
+#     def disconnect(self):
+#         self.poly.disconnect_events()
+#         self.canvas.draw_idle()
+#
+#
+# def break_loop(event):
+#     global breaker
+#     global globSelect
+#     global savePath
+#     if event.key == 'b':
+#         globSelect.disconnect()
+#         with open(savePath, 'wb') as f:  # Assuming data integrity in existing file
+#             pickle.dump(total_points, f, protocol=pickle.HIGHEST_PROTOCOL)
+#         print("Data saved in", savePath + " file")
+#         exit()
+#
+#
+# def onkeypress(event):
+#     global points, prev_points, total_points
+#     if event.key == 'n':
+#         pts = np.array(points, dtype=np.int32)
+#         if points != prev_points and len(set(points)) == 4:
+#             print("Points:", pts)
+#             patches.append(Polygon(pts))
+#             total_points.append(pts)
+#             prev_points = points
+#
+#
+# def load_existing_data(file_path):
+#     """
+#     Loads existing region data from a .p file (if it exists).
+#
+#     Args:
+#         file_path (str): Path to the .p file.
+#
+#     Returns:
+#         list: List of previously saved region points, or an empty list if no file exists.
+#     """
+#
+#     if os.path.exists(file_path):
+#         try:
+#             with open(file_path, 'rb') as f:
+#                 return pickle.load(f)
+#         except (EOFError, pickle.UnpicklingError):
+#             print("Error loading data from", file_path, ". Starting fresh.")
+#             return []
+#     else:
+#         return []
+#
+#
+# if __name__ == '__main__':
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('video_path', help="Path of video file")
+#     parser.add_argument('--out_file', help="Name of the output file", default="regions.p")
+#     args = parser.parse_args()
+#
+#     global globSelect
+#     global savePath
+#     savePath = args.out_file if args.out_file.endswith(".p") else args.out_file + ".p"
+#
+#     video_capture = cv2.VideoCapture(args.video_path)
+#     cnt = 0
+#     rgb_image = None
+#     while video_capture.isOpened():
+#         success, frame = video_capture.read()
+#         if not success:
+#             break
+#         if cnt == 5:
+#             rgb_image = frame[:, :, ::-1]
+#         cnt += 1
+#     video_capture.release()
+#
+#     # Load existing data if the file exists
+#     total_points = load_existing_data(savePath)
+#     patches = [Polygon(p) for p in total_points]  # Convert loaded points to patches
+#
+#     while True:
+#         fig, ax = plt.subplots()
+#         image = rgb_image
+#         ax.imshow(image)
+#
+#         p = PatchCollection(patches, alpha=0.7)
+#         p.set_array(10 * np.ones(len(patches)))
+#         ax.add_collection(p)
+#
+#         globSelect = SelectFromCollection(ax)
+#         bbox = plt.connect('key_press_event', onkeypress)
+#         break_event = plt.connect('key_press_event', break_loop)
+#
+#         # Define the paragraph explaining program usage
+#         # Define the paragraph explaining program usage
+#         paragraph = """
+#         Select a region in the figure by enclosing them within a quadrilateral:
+#             - Press 'f' to toggle fullscreen.
+#             - Press 'esc' to discard the current quadrilateral.
+#             - Hold 'left' to move a single vertex.
+#             - After marking a quadrilateral:
+#                 - Press 'n' to save the current quadrilateral.
+#                 - Press 'q' to start marking a new quadrilateral.
+#             - When finished, press 'b' to exit the program.
+#
+#         Existing regions are loaded from: {}
+#         """.format(savePath)
+#
+#         # Print the paragraph
+#         print(paragraph)
+#         plt.figtext(0.1, 0, paragraph, wrap=True, horizontalalignment='left', fontsize=12)
+#         fig.subplots_adjust(bottom=0.3)
+#         plt.show()
+#
+#         globSelect.disconnect()
+#
+#         # Check if user wants to exit or continue adding regions
+#         if breaker:
+#             break
+#
+"""
+import os
+import numpy as np
+import cv2
+import pickle
+import argparse
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.widgets import PolygonSelector
+from matplotlib.collections import PatchCollection
+from shapely.geometry import box
+from shapely.geometry import Polygon as shapely_poly
+
+
+# Set 'serif' for a general serif font (e.g., DejaVu Serif)
+plt.rcParams["font.family"] = "serif"
+
+# Set font size (optional)
+plt.rcParams["font.size"] = 12
+
+points = []
+prev_points = []
+patches = []
+total_points = []
+breaker = False
+selected_patch = None  # To store the currently selected patch for deletion
+
+class SelectFromCollection(object):
+    def __init__(self, ax):
+        self.canvas = ax.figure.canvas
+
+        self.poly = PolygonSelector(ax, self.onselect)
+        self.ind = []
+
+    def onselect(self, verts):
+        global points
+        points = verts
+        self.canvas.draw_idle()
+
+    def disconnect(self):
+        self.poly.disconnect_events()
+        self.canvas.draw_idle()
+
+
+
+
+
+def break_loop(event):
+    global breaker
+    global globSelect
+    global savePath
+    if event.key == 'b':
+        globSelect.disconnect()
+        with open(savePath, 'wb') as f:
+            pickle.dump(total_points, f, protocol=pickle.HIGHEST_PROTOCOL)
+        print("Data saved in", savePath + " file")
+        exit()
+
+
+def onkeypress(event):
+    global points, prev_points, total_points
+    if event.key == 'n':
+        pts = np.array(points, dtype=np.int32)
+        if points != prev_points and len(set(points)) == 4:
+            print("Points:", pts)
+            patches.append(Polygon(pts))
+            total_points.append(pts)
+            prev_points = points
+
+def load_existing_data(file_path):
+
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'rb') as f:
+                return pickle.load(f)
+        except (EOFError, pickle.UnpicklingError):
+            print("Error loading data from", file_path, ". Starting fresh.")
+            return []
+    else:
+        return []
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('video_path', help="Path of video file")
+    parser.add_argument('--out_file', help="Name of the output file", default="regions.p")
+    args = parser.parse_args()
+
+    global globSelect
+    global savePath
+    savePath = args.out_file if args.out_file.endswith(".p") else args.out_file + ".p"
+
+    video_capture = cv2.VideoCapture(args.video_path)
+    cnt = 0
+    rgb_image = None
+    while video_capture.isOpened():
+        success, frame = video_capture.read()
+        if not success:
+            break
+        if cnt == 5:
+            rgb_image = frame[:, :, ::-1]
+        cnt += 1
+    video_capture.release()
+    total_points = load_existing_data(savePath)
+    patches = [Polygon(p) for p in total_points]  # Convert loaded points to patches
+
+    while True:
+        fig, ax = plt.subplots()
+        image = rgb_image
+        ax.imshow(image)
+
+        p = PatchCollection(patches, alpha=0.7)
+        p.set_array(10 * np.ones(len(patches)))
+        ax.add_collection(p)
+
+        globSelect = SelectFromCollection(ax)
+        bbox = plt.connect('key_press_event', onkeypress)
+        break_event = plt.connect('key_press_event', break_loop)
+
+        # Define the paragraph explaining program usage
+        paragraph = ""
+        Select a region in the figure by enclosing them within a quadrilateral:
+            - Press 'f' to toggle fullscreen.
+            - Press 'esc' to discard the current quadrilateral.
+            - Hold 'mouse left button' to move a single vertex.
+            - After marking a quadrilateral:
+            - Press 'n' to save the current quadrilateral.
+            - Press 'q' to start marking a new quadrilateral.
+            - When finished, press 'b' to exit the program.
+
+        ""
+        plt.figtext(0.1, 0, paragraph, wrap=True, horizontalalignment='left', fontsize=12)
+        fig.subplots_adjust(bottom=0.3)
+        plt.show()
+
+        globSelect.disconnect()
+
+        # Check if user wants to exit or continue adding regions
+        if breaker:
+            break
+"""

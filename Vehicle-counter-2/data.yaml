@@ -1,0 +1,12 @@
+names:
+- car
+nc: 1
+roboflow:
+  license: CC BY 4.0
+  project: vehicle-counter-5zkt5
+  url: https://universe.roboflow.com/vehicle-counter/vehicle-counter-5zkt5/dataset/2
+  version: 2
+  workspace: vehicle-counter
+test: S:\college\python\detect/Vehicle-counter-2/test/images
+train: S:\college\python\detect/Vehicle-counter-2/train/images
+val: S:\college\python\detect/Vehicle-counter-2/valid/images

@@ -1,10 +1,10 @@
-# from ultralytics import YOLO
-#
-# # Load a pretrained YOLOv8n model
-# model = YOLO('yolov8n.pt')
-#
-# # Run inference on an image
-# results = model('carimage//bus.jpg')  # results list
+from ultralytics import YOLO
+
+# Load a pretrained YOLOv8n model
+model = YOLO('yolov9c.pt')
+
+# Run inference on an image
+results = model('carvideo//sample.mp4' ,show=True)  # results list
 # print("hihihihihhihihihihihhihi")
 # results[0]
 # results[]
@@ -14,7 +14,7 @@
 # #     print(r.boxes)  # print the Boxes object containing the detection bounding boxes
 import torch
 from torch import classes
-
+'''
 from ultralytics import YOLO
 from shapely.geometry import Polygon as shapely_poly
 from shapely.geometry import box
@@ -123,3 +123,4 @@ if __name__ == "__main__":
     out.release()
     cv2.destroyAllWindows()
     print("output saved as out.avi")
+'''
